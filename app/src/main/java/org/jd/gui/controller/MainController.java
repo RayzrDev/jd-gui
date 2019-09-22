@@ -46,8 +46,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -55,22 +55,22 @@ import java.util.concurrent.TimeUnit;
 
 public class MainController implements API {
     protected Configuration configuration;
-    protected MainView mainView;
+    private MainView mainView;
 
-    protected GoToController goToController;
-    protected OpenTypeController openTypeController;
-    protected OpenTypeHierarchyController openTypeHierarchyController;
-    protected PreferencesController preferencesController;
-    protected SearchInConstantPoolsController searchInConstantPoolsController;
-    protected SaveAllSourcesController saveAllSourcesController;
-    protected SelectLocationController selectLocationController;
-    protected AboutController aboutController;
-    protected SourceLoaderService sourceLoaderService;
+    private GoToController goToController;
+    private OpenTypeController openTypeController;
+    private OpenTypeHierarchyController openTypeHierarchyController;
+    private PreferencesController preferencesController;
+    private SearchInConstantPoolsController searchInConstantPoolsController;
+    private SaveAllSourcesController saveAllSourcesController;
+    private SelectLocationController selectLocationController;
+    private AboutController aboutController;
+    private SourceLoaderService sourceLoaderService;
 
-    protected History history = new History();
-    protected JComponent currentPage = null;
-    protected ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
-    protected ArrayList<IndexesChangeListener> containerChangeListeners = new ArrayList<>();
+    private History history = new History();
+    private JComponent currentPage = null;
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+    private ArrayList<IndexesChangeListener> containerChangeListeners = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
     public MainController(Configuration configuration) {
@@ -84,40 +84,39 @@ public class MainController implements API {
 
             // Create main frame
             mainView = new MainView(
-                configuration, this, history,
-                e -> onOpen(),
-                e -> onClose(),
-                e -> onSaveSource(),
-                e -> onSaveAllSources(),
-                e -> System.exit(0),
-                e -> onCopy(),
-                e -> onPaste(),
-                e -> onSelectAll(),
-                e -> onFind(),
-                e -> onFindPrevious(),
-                e -> onFindNext(),
-                e -> onFindCriteriaChanged(),
-                () -> onFindCriteriaChanged(),
-                e -> onOpenType(),
-                e -> onOpenTypeHierarchy(),
-                e -> onGoTo(),
-                e -> openURI(history.backward()),
-                e -> openURI(history.forward()),
-                e -> onSearch(),
-                e -> onJdWebSite(),
-                e -> onJdGuiIssues(),
-                e -> onJdCoreIssues(),
-                e -> onPreferences(),
-                e -> onAbout(),
-                () -> panelClosed(),
-                page -> onCurrentPageChanged((JComponent)page),
-                file -> openFile((File)file));
+                    configuration, this, history,
+                    e -> onOpen(),
+                    e -> onClose(),
+                    e -> onSaveSource(),
+                    e -> onSaveAllSources(),
+                    e -> System.exit(0),
+                    e -> onCopy(),
+                    e -> onPaste(),
+                    e -> onSelectAll(),
+                    e -> onFind(),
+                    e -> onFindPrevious(),
+                    e -> onFindNext(),
+                    e -> onFindCriteriaChanged(),
+                    this::onFindCriteriaChanged,
+                    e -> onOpenType(),
+                    e -> onOpenTypeHierarchy(),
+                    e -> onGoTo(),
+                    e -> openURI(history.backward()),
+                    e -> openURI(history.forward()),
+                    e -> onSearch(),
+                    e -> onJdWebSite(),
+                    e -> onJdGuiIssues(),
+                    e -> onJdCoreIssues(),
+                    e -> onPreferences(),
+                    e -> onAbout(),
+                    this::panelClosed,
+                    page -> onCurrentPageChanged((JComponent) page),
+                    file -> openFile((File) file));
         });
-	}
+    }
 
-	// --- Show GUI --- //
-    @SuppressWarnings("unchecked")
-	public void show(List<File> files) {
+    // --- Show GUI --- //
+    public void show(List<File> files) {
         SwingUtil.invokeLater(() -> {
             // Show main frame
             mainView.show(configuration.getMainWindowLocation(), configuration.getMainWindowSize(), configuration.isMainWindowMaximize());
@@ -167,8 +166,8 @@ public class MainController implements API {
         SourceSaverService.getInstance();
     }
 
-	// --- Actions --- //
-    protected void onOpen() {
+    // --- Actions --- //
+    private void onOpen() {
         Map<String, FileLoader> loaders = FileLoaderService.getInstance().getMapProviders();
         StringBuilder sb = new StringBuilder();
         ArrayList<String> extensions = new ArrayList<>(loaders.keySet());
@@ -179,7 +178,7 @@ public class MainController implements API {
             sb.append("*.").append(extension).append(", ");
         }
 
-        sb.setLength(sb.length()-2);
+        sb.setLength(sb.length() - 2);
 
         String description = sb.toString();
         String[] array = extensions.toArray(new String[0]);
@@ -199,18 +198,18 @@ public class MainController implements API {
             configuration.setRecentLoadDirectory(chooser.getCurrentDirectory());
             openFile(chooser.getSelectedFile());
         }
-	}
+    }
 
-    protected void onClose() {
+    private void onClose() {
         mainView.closeCurrentTab();
     }
 
-    protected void onSaveSource() {
+    private void onSaveSource() {
         if (currentPage instanceof ContentSavable) {
             JFileChooser chooser = new JFileChooser();
             JFrame mainFrame = mainView.getMainFrame();
 
-            chooser.setSelectedFile(new File(configuration.getRecentSaveDirectory(), ((ContentSavable)currentPage).getFileName()));
+            chooser.setSelectedFile(new File(configuration.getRecentSaveDirectory(), ((ContentSavable) currentPage).getFileName()));
 
             if (chooser.showSaveDialog(mainFrame) == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = chooser.getSelectedFile();
@@ -231,20 +230,20 @@ public class MainController implements API {
         }
     }
 
-    protected void save(File selectedFile) {
+    private void save(File selectedFile) {
         try (OutputStream os = new FileOutputStream(selectedFile)) {
-            ((ContentSavable)currentPage).save(this, os);
+            ((ContentSavable) currentPage).save(this, os);
         } catch (IOException e) {
             assert ExceptionUtil.printStackTrace(e);
         }
     }
 
-    protected void onSaveAllSources() {
-        if (! saveAllSourcesController.isActivated()) {
+    private void onSaveAllSources() {
+        if (!saveAllSourcesController.isActivated()) {
             JComponent currentPanel = mainView.getSelectedMainPanel();
 
             if (currentPanel instanceof SourcesSavable) {
-                SourcesSavable sourcesSavable = (SourcesSavable)currentPanel;
+                SourcesSavable sourcesSavable = (SourcesSavable) currentPanel;
                 JFileChooser chooser = new JFileChooser();
                 JFrame mainFrame = mainView.getMainFrame();
 
@@ -270,13 +269,13 @@ public class MainController implements API {
         }
     }
 
-    protected void onCopy() {
+    private void onCopy() {
         if (currentPage instanceof ContentCopyable) {
-            ((ContentCopyable)currentPage).copy();
+            ((ContentCopyable) currentPage).copy();
         }
     }
 
-    protected void onPaste() {
+    private void onPaste() {
         try {
             Transferable transferable = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
 
@@ -293,60 +292,60 @@ public class MainController implements API {
         }
     }
 
-    protected void onSelectAll() {
+    private void onSelectAll() {
         if (currentPage instanceof ContentSelectable) {
-            ((ContentSelectable)currentPage).selectAll();
+            ((ContentSelectable) currentPage).selectAll();
         }
     }
 
-    protected void onFind() {
+    private void onFind() {
         if (currentPage instanceof ContentSearchable) {
             mainView.showFindPanel();
         }
     }
 
-    protected void onFindCriteriaChanged() {
+    private void onFindCriteriaChanged() {
         if (currentPage instanceof ContentSearchable) {
-            mainView.setFindBackgroundColor(((ContentSearchable)currentPage).highlightText(mainView.getFindText(), mainView.getFindCaseSensitive()));
+            mainView.setFindBackgroundColor(((ContentSearchable) currentPage).highlightText(mainView.getFindText(), mainView.getFindCaseSensitive()));
         }
     }
 
-    protected void onFindNext() {
+    private void onFindNext() {
         if (currentPage instanceof ContentSearchable) {
-            ((ContentSearchable)currentPage).findNext(mainView.getFindText(), mainView.getFindCaseSensitive());
+            ((ContentSearchable) currentPage).findNext(mainView.getFindText(), mainView.getFindCaseSensitive());
         }
     }
 
-    protected void onOpenType() {
-        openTypeController.show(getCollectionOfFutureIndexes(), uri -> openURI(uri));
+    private void onOpenType() {
+        openTypeController.show(getCollectionOfFutureIndexes(), this::openURI);
     }
 
-    protected void onOpenTypeHierarchy() {
+    private void onOpenTypeHierarchy() {
         if (currentPage instanceof FocusedTypeGettable) {
-            FocusedTypeGettable ftg = (FocusedTypeGettable)currentPage;
-            openTypeHierarchyController.show(getCollectionOfFutureIndexes(), ftg.getEntry(), ftg.getFocusedTypeName(), uri -> openURI(uri));
+            FocusedTypeGettable ftg = (FocusedTypeGettable) currentPage;
+            openTypeHierarchyController.show(getCollectionOfFutureIndexes(), ftg.getEntry(), ftg.getFocusedTypeName(), this::openURI);
         }
     }
 
-    protected void onGoTo() {
+    private void onGoTo() {
         if (currentPage instanceof LineNumberNavigable) {
-            LineNumberNavigable lnn = (LineNumberNavigable)currentPage;
-            goToController.show(lnn, lineNumber -> lnn.goToLineNumber(lineNumber));
+            LineNumberNavigable lnn = (LineNumberNavigable) currentPage;
+            goToController.show(lnn, lnn::goToLineNumber);
         }
     }
 
-    protected void onSearch() {
-        searchInConstantPoolsController.show(getCollectionOfFutureIndexes(), uri -> openURI(uri));
+    private void onSearch() {
+        searchInConstantPoolsController.show(getCollectionOfFutureIndexes(), this::openURI);
     }
 
-    protected void onFindPrevious() {
+    private void onFindPrevious() {
         if (currentPage instanceof ContentSearchable) {
-            ContentSearchable cs = (ContentSearchable)currentPage;
+            ContentSearchable cs = (ContentSearchable) currentPage;
             cs.findPrevious(mainView.getFindText(), mainView.getFindCaseSensitive());
         }
     }
 
-    protected void onJdWebSite() {
+    private void onJdWebSite() {
         if (Desktop.isDesktopSupported()) {
             Desktop desktop = Desktop.getDesktop();
             if (desktop.isSupported(Desktop.Action.BROWSE)) {
@@ -359,7 +358,7 @@ public class MainController implements API {
         }
     }
 
-    protected void onJdGuiIssues() {
+    private void onJdGuiIssues() {
         if (Desktop.isDesktopSupported()) {
             Desktop desktop = Desktop.getDesktop();
             if (desktop.isSupported(Desktop.Action.BROWSE)) {
@@ -372,7 +371,7 @@ public class MainController implements API {
         }
     }
 
-    protected void onJdCoreIssues() {
+    private void onJdCoreIssues() {
         if (Desktop.isDesktopSupported()) {
             Desktop desktop = Desktop.getDesktop();
             if (desktop.isSupported(Desktop.Action.BROWSE)) {
@@ -385,56 +384,54 @@ public class MainController implements API {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    protected void onPreferences() {
+    private void onPreferences() {
         preferencesController.show(() -> {
             checkPreferencesChange(currentPage);
             mainView.preferencesChanged(getPreferences());
         });
     }
 
-    protected void onAbout() {
+    private void onAbout() {
         aboutController.show();
     }
 
-    protected void onCurrentPageChanged(JComponent page) {
+    private void onCurrentPageChanged(JComponent page) {
         currentPage = page;
         checkPreferencesChange(page);
         checkIndexesChange(page);
     }
 
-    protected void checkPreferencesChange(JComponent page) {
+    private void checkPreferencesChange(JComponent page) {
         if (page instanceof PreferencesChangeListener) {
             Map<String, String> preferences = configuration.getPreferences();
-            Integer currentHashcode = Integer.valueOf(preferences.hashCode());
-            Integer lastHashcode = (Integer)page.getClientProperty("preferences-hashCode");
+            Integer currentHashcode = preferences.hashCode();
+            Integer lastHashcode = (Integer) page.getClientProperty("preferences-hashCode");
 
             if (!currentHashcode.equals(lastHashcode)) {
-                ((PreferencesChangeListener)page).preferencesChanged(preferences);
+                ((PreferencesChangeListener) page).preferencesChanged(preferences);
                 page.putClientProperty("preferences-hashCode", currentHashcode);
             }
         }
     }
 
-    protected void checkIndexesChange(JComponent page) {
+    private void checkIndexesChange(JComponent page) {
         if (page instanceof IndexesChangeListener) {
             Collection<Future<Indexes>> collectionOfFutureIndexes = getCollectionOfFutureIndexes();
-            Integer currentHashcode = Integer.valueOf(collectionOfFutureIndexes.hashCode());
-            Integer lastHashcode = (Integer)page.getClientProperty("collectionOfFutureIndexes-hashCode");
+            Integer currentHashcode = collectionOfFutureIndexes.hashCode();
+            Integer lastHashcode = (Integer) page.getClientProperty("collectionOfFutureIndexes-hashCode");
 
             if (!currentHashcode.equals(lastHashcode)) {
-                ((IndexesChangeListener)page).indexesChanged(collectionOfFutureIndexes);
+                ((IndexesChangeListener) page).indexesChanged(collectionOfFutureIndexes);
                 page.putClientProperty("collectionOfFutureIndexes-hashCode", currentHashcode);
             }
         }
     }
 
     // --- Operations --- //
-    public void openFile(File file) {
+    private void openFile(File file) {
         openFiles(Collections.singletonList(file));
     }
 
-    @SuppressWarnings("unchecked")
     public void openFiles(List<File> files) {
         ArrayList<String> errors = new ArrayList<>();
 
@@ -489,7 +486,7 @@ public class MainController implements API {
         public boolean importData(TransferHandler.TransferSupport info) {
             if (info.isDrop() && info.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 try {
-                    openFiles((List<File>)info.getTransferable().getTransferData(DataFlavor.javaFileListFlavor));
+                    openFiles((List<File>) info.getTransferable().getTransferData(DataFlavor.javaFileListFlavor));
                     return true;
                 } catch (Exception e) {
                     assert ExceptionUtil.printStackTrace(e);
@@ -503,7 +500,7 @@ public class MainController implements API {
     protected class MainFrameListener extends ComponentAdapter {
         protected Configuration configuration;
 
-        public MainFrameListener(Configuration configuration) {
+        MainFrameListener(Configuration configuration) {
             this.configuration = configuration;
         }
 
@@ -532,7 +529,7 @@ public class MainController implements API {
         }
     }
 
-    protected void panelClosed() {
+    private void panelClosed() {
         SwingUtil.invokeLater(() -> {
             // Fire 'indexesChanged' event
             Collection<Future<Indexes>> collectionOfFutureIndexes = getCollectionOfFutureIndexes();
@@ -540,19 +537,18 @@ public class MainController implements API {
                 listener.indexesChanged(collectionOfFutureIndexes);
             }
             if (currentPage instanceof IndexesChangeListener) {
-                ((IndexesChangeListener)currentPage).indexesChanged(collectionOfFutureIndexes);
+                ((IndexesChangeListener) currentPage).indexesChanged(collectionOfFutureIndexes);
             }
         });
     }
 
     // --- API --- //
     @Override
-    @SuppressWarnings("unchecked")
     public boolean openURI(URI uri) {
         if (uri != null) {
             boolean success = mainView.openUri(uri);
 
-            if (success == false) {
+            if (!success) {
                 UriLoader uriLoader = getUriLoader(uri);
                 if (uriLoader != null) {
                     success = uriLoader.load(this, uri);
@@ -580,10 +576,11 @@ public class MainController implements API {
                 // Multiple entries -> Open a "Select location" popup
                 Collection<Future<Indexes>> collectionOfFutureIndexes = getCollectionOfFutureIndexes();
                 selectLocationController.show(
-                    new Point(x+(16+2), y+2),
-                    entries,
-                    entry -> openURI(UriUtil.createURI(this, collectionOfFutureIndexes, entry, query, fragment)), // entry selected closure
-                    () -> {});                                                                                    // popup close closure
+                        new Point(x + (16 + 2), y + 2),
+                        entries,
+                        entry -> openURI(UriUtil.createURI(this, collectionOfFutureIndexes, entry, query, fragment)), // entry selected closure
+                        () -> {
+                        });                                                                                    // popup close closure
                 return true;
             }
         }
@@ -594,19 +591,16 @@ public class MainController implements API {
     @Override
     public void addURI(URI uri) {
         history.add(uri);
-        SwingUtil.invokeLater(() -> {
-            mainView.updateHistoryActions();
-        });
+        SwingUtil.invokeLater(() -> mainView.updateHistoryActions());
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T extends JComponent & UriGettable> void addPanel(String title, Icon icon, String tip, T component) {
         mainView.addMainPanel(title, icon, tip, component);
 
         if (component instanceof ContentIndexable) {
             Future<Indexes> futureIndexes = executor.submit(() -> {
-                Indexes indexes = ((ContentIndexable)component).index(this);
+                Indexes indexes = ((ContentIndexable) component).index(this);
 
                 SwingUtil.invokeLater(() -> {
                     // Fire 'indexesChanged' event
@@ -626,25 +620,55 @@ public class MainController implements API {
         }
     }
 
-    @Override public Collection<Action> getContextualActions(Container.Entry entry, String fragment) { return ContextualActionsFactoryService.getInstance().get(this, entry, fragment); }
+    @Override
+    public Collection<Action> getContextualActions(Container.Entry entry, String fragment) {
+        return ContextualActionsFactoryService.getInstance().get(this, entry, fragment);
+    }
 
-    @Override public FileLoader getFileLoader(File file) { return FileLoaderService.getInstance().get(this, file); }
+    @Override
+    public FileLoader getFileLoader(File file) {
+        return FileLoaderService.getInstance().get(this, file);
+    }
 
-    @Override public UriLoader getUriLoader(URI uri) { return UriLoaderService.getInstance().get(this, uri); }
+    @Override
+    public UriLoader getUriLoader(URI uri) {
+        return UriLoaderService.getInstance().get(this, uri);
+    }
 
-    @Override public PanelFactory getMainPanelFactory(Container container) { return PanelFactoryService.getInstance().get(container); }
+    @Override
+    public PanelFactory getMainPanelFactory(Container container) {
+        return PanelFactoryService.getInstance().get(container);
+    }
 
-    @Override public ContainerFactory getContainerFactory(Path rootPath) { return ContainerFactoryService.getInstance().get(this, rootPath); }
+    @Override
+    public ContainerFactory getContainerFactory(Path rootPath) {
+        return ContainerFactoryService.getInstance().get(this, rootPath);
+    }
 
-    @Override public TreeNodeFactory getTreeNodeFactory(Container.Entry entry) { return TreeNodeFactoryService.getInstance().get(entry); }
+    @Override
+    public TreeNodeFactory getTreeNodeFactory(Container.Entry entry) {
+        return TreeNodeFactoryService.getInstance().get(entry);
+    }
 
-    @Override public TypeFactory getTypeFactory(Container.Entry entry) { return TypeFactoryService.getInstance().get(entry); }
+    @Override
+    public TypeFactory getTypeFactory(Container.Entry entry) {
+        return TypeFactoryService.getInstance().get(entry);
+    }
 
-    @Override public Indexer getIndexer(Container.Entry entry) { return IndexerService.getInstance().get(entry); }
+    @Override
+    public Indexer getIndexer(Container.Entry entry) {
+        return IndexerService.getInstance().get(entry);
+    }
 
-    @Override public SourceSaver getSourceSaver(Container.Entry entry) { return SourceSaverService.getInstance().get(entry); }
+    @Override
+    public SourceSaver getSourceSaver(Container.Entry entry) {
+        return SourceSaverService.getInstance().get(entry);
+    }
 
-    @Override public Map<String, String> getPreferences() { return configuration.getPreferences(); }
+    @Override
+    public Map<String, String> getPreferences() {
+        return configuration.getPreferences();
+    }
 
     @Override
     @SuppressWarnings("unchecked")
@@ -672,7 +696,7 @@ public class MainController implements API {
         };
 
         for (JComponent panel : mainPanels) {
-            Future<Indexes> futureIndexes = (Future<Indexes>)panel.getClientProperty("indexes");
+            Future<Indexes> futureIndexes = (Future<Indexes>) panel.getClientProperty("indexes");
             if (futureIndexes != null) {
                 list.add(futureIndexes);
             }

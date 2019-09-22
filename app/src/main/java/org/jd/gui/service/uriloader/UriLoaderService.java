@@ -18,7 +18,9 @@ import java.util.HashMap;
 public class UriLoaderService {
     protected static final UriLoaderService URI_LOADER_SERVICE = new UriLoaderService();
 
-    public static UriLoaderService getInstance() { return URI_LOADER_SERVICE; }
+    public static UriLoaderService getInstance() {
+        return URI_LOADER_SERVICE;
+    }
 
     protected HashMap<String, UriLoader> mapProviders = new HashMap<>();
 

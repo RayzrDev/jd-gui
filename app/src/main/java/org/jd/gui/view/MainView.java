@@ -99,9 +99,10 @@ public class MainView<T extends JComponent & UriGettable> implements UriOpenable
             findPanel.add(new JLabel("Find: "));
             findComboBox = new JComboBox();
             findComboBox.setEditable(true);
-            JComponent editorComponent = (JComponent)findComboBox.getEditor().getEditorComponent();
+
+            JComponent editorComponent = (JComponent) findComboBox.getEditor().getEditorComponent();
             editorComponent.addKeyListener(new KeyAdapter() {
-                protected String lastStr = "";
+                String lastStr = "";
 
                 @Override
                 public void keyReleased(KeyEvent e) {
@@ -112,8 +113,8 @@ public class MainView<T extends JComponent & UriGettable> implements UriOpenable
                         case KeyEvent.VK_ENTER:
                             String str = getFindText();
                             if (str.length() > 1) {
-                                int index = ((DefaultComboBoxModel)findComboBox.getModel()).getIndexOf(str);
-                                if(index != -1 ) {
+                                int index = ((DefaultComboBoxModel) findComboBox.getModel()).getIndexOf(str);
+                                if (index != -1) {
                                     findComboBox.removeItemAt(index);
                                 }
                                 findComboBox.insertItemAt(str, 0);
@@ -123,7 +124,7 @@ public class MainView<T extends JComponent & UriGettable> implements UriOpenable
                             break;
                         default:
                             str = getFindText();
-                            if (! lastStr.equals(str)) {
+                            if (!lastStr.equals(str)) {
                                 findCriteriaChangedCallback.run();
                                 lastStr = str;
                             }
@@ -203,7 +204,7 @@ public class MainView<T extends JComponent & UriGettable> implements UriOpenable
             menu.add(closeAction).setAccelerator(KeyStroke.getKeyStroke('W', menuShortcutKeyMask));
             menu.addSeparator();
             menu.add(saveAction).setAccelerator(KeyStroke.getKeyStroke('S', menuShortcutKeyMask));
-            menu.add(saveAllSourcesAction).setAccelerator(KeyStroke.getKeyStroke('S', menuShortcutKeyMask|InputEvent.ALT_MASK));
+            menu.add(saveAllSourcesAction).setAccelerator(KeyStroke.getKeyStroke('S', menuShortcutKeyMask | InputEvent.ALT_MASK));
             menu.addSeparator();
             menu.add(recentFiles);
             if (!PlatformService.getInstance().isMac()) {
@@ -229,7 +230,7 @@ public class MainView<T extends JComponent & UriGettable> implements UriOpenable
             menu.add(forwardAction).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK));
             menu = new JMenu("Search");
             menuBar.add(menu);
-            menu.add(searchAction).setAccelerator(KeyStroke.getKeyStroke('S', menuShortcutKeyMask|InputEvent.SHIFT_MASK));
+            menu.add(searchAction).setAccelerator(KeyStroke.getKeyStroke('S', menuShortcutKeyMask | InputEvent.SHIFT_MASK));
             menu = new JMenu("Help");
             menuBar.add(menu);
             if (browser) {
@@ -238,7 +239,7 @@ public class MainView<T extends JComponent & UriGettable> implements UriOpenable
                 menu.add(jdCoreIssuesActionAction);
                 menu.addSeparator();
             }
-            menu.add(preferencesAction).setAccelerator(KeyStroke.getKeyStroke('P', menuShortcutKeyMask|InputEvent.SHIFT_MASK));
+            menu.add(preferencesAction).setAccelerator(KeyStroke.getKeyStroke('P', menuShortcutKeyMask | InputEvent.SHIFT_MASK));
             if (!PlatformService.getInstance().isMac()) {
                 menu.addSeparator();
                 menu.add(aboutAction).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0));
@@ -264,11 +265,12 @@ public class MainView<T extends JComponent & UriGettable> implements UriOpenable
             mainTabbedPanel.getPageChangedListeners().add(new PageChangeListener() {
                 protected JComponent currentPage = null;
 
-                @Override public <U extends JComponent & UriGettable> void pageChanged(U page) {
+                @Override
+                public <U extends JComponent & UriGettable> void pageChanged(U page) {
                     if (currentPage != page) {
                         // Update current page
                         currentPage = page;
-                        currentPageChangedCallback.accept((T)page);
+                        currentPageChangedCallback.accept((T) page);
 
                         invokeLater(() -> {
                             if (page == null) {
@@ -374,14 +376,14 @@ public class MainView<T extends JComponent & UriGettable> implements UriOpenable
     }
 
     public <T extends JComponent & UriGettable> T getSelectedMainPanel() {
-        return (T)mainTabbedPanel.getTabbedPane().getSelectedComponent();
+        return (T) mainTabbedPanel.getTabbedPane().getSelectedComponent();
     }
 
     public void closeCurrentTab() {
         invokeLater(() -> {
             Component component = mainTabbedPanel.getTabbedPane().getSelectedComponent();
             if (component instanceof PageClosable) {
-                if (!((PageClosable)component).closePage()) {
+                if (!((PageClosable) component).closePage()) {
                     mainTabbedPanel.removeComponent(component);
                 }
             } else {
@@ -403,7 +405,7 @@ public class MainView<T extends JComponent & UriGettable> implements UriOpenable
     }
 
     public String getFindText() {
-        Document doc = ((JTextField)findComboBox.getEditor().getEditorComponent()).getDocument();
+        Document doc = ((JTextField) findComboBox.getEditor().getEditorComponent()).getDocument();
 
         try {
             return doc.getText(0, doc.getLength());
@@ -413,7 +415,9 @@ public class MainView<T extends JComponent & UriGettable> implements UriOpenable
         }
     }
 
-    public boolean getFindCaseSensitive() { return findCaseSensitive.isSelected(); }
+    public boolean getFindCaseSensitive() {
+        return findCaseSensitive.isSelected();
+    }
 
     public void updateHistoryActions() {
         invokeLater(() -> {
@@ -430,7 +434,7 @@ public class MainView<T extends JComponent & UriGettable> implements UriOpenable
             return path;
         }
 
-        int length = Constants.RECENT_FILE_MAX_LENGTH/2 - 2;
+        int length = Constants.RECENT_FILE_MAX_LENGTH / 2 - 2;
         String left = path.substring(0, length);
         String right = path.substring(path.length() - length);
 

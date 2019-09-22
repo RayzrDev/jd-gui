@@ -21,26 +21,25 @@ import java.util.Collections;
 import java.util.List;
 
 public class App {
-    protected static final String SINGLE_INSTANCE = "UIMainWindowPreferencesProvider.singleInstance";
+    private static final String SINGLE_INSTANCE = "UIMainWindowPreferencesProvider.singleInstance";
 
     protected static MainController controller;
 
     public static void main(String[] args) {
-		if (checkHelpFlag(args)) {
-			JOptionPane.showMessageDialog(null, "Usage: jd-gui [option] [input-file] ...\n\nOption:\n -h Show this help message and exit", Constants.APP_NAME, JOptionPane.INFORMATION_MESSAGE);
-		} else {
+        if (checkHelpFlag(args)) {
+            JOptionPane.showMessageDialog(null, "Usage: jd-gui [option] [input-file] ...\n\nOption:\n -h Show this help message and exit", Constants.APP_NAME, JOptionPane.INFORMATION_MESSAGE);
+        } else {
             // Load preferences
             ConfigurationPersister persister = ConfigurationPersisterService.getInstance().get();
             Configuration configuration = persister.load();
             Runtime.getRuntime().addShutdownHook(new Thread(() -> persister.save(configuration)));
 
             if ("true".equals(configuration.getPreferences().get(SINGLE_INSTANCE))) {
-                InterProcessCommunicationUtil ipc = new InterProcessCommunicationUtil();
                 try {
-                    ipc.listen(receivedArgs -> controller.openFiles(newList(receivedArgs)));
+                    InterProcessCommunicationUtil.listen(receivedArgs -> controller.openFiles(newList(receivedArgs)));
                 } catch (Exception notTheFirstInstanceException) {
                     // Send args to main windows and exit
-                    ipc.send(args);
+                    InterProcessCommunicationUtil.send(args);
                     System.exit(0);
                 }
             }
@@ -48,22 +47,22 @@ public class App {
             // Create SwingBuilder, set look and feel
             try {
                 UIManager.setLookAndFeel(configuration.getLookAndFeel());
-            } catch (Exception e) {
+            } catch (Exception ignored) {
                 configuration.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 try {
                     UIManager.setLookAndFeel(configuration.getLookAndFeel());
-                } catch (Exception ee) {
-                    assert ExceptionUtil.printStackTrace(ee);
+                } catch (Exception e) {
+                    assert ExceptionUtil.printStackTrace(e);
                 }
-           }
+            }
 
             // Create main controller and show main frame
             controller = new MainController(configuration);
             controller.show(newList(args));
-		}
-	}
+        }
+    }
 
-    protected static boolean checkHelpFlag(String[] args) {
+    private static boolean checkHelpFlag(String[] args) {
         if (args != null) {
             for (String arg : args) {
                 if ("-h".equals(arg)) {
@@ -74,7 +73,7 @@ public class App {
         return false;
     }
 
-    protected static List<File> newList(String[] paths) {
+    private static List<File> newList(String[] paths) {
         if (paths == null) {
             return Collections.emptyList();
         } else {

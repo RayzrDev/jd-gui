@@ -18,28 +18,23 @@ import java.net.Socket;
 import java.util.function.Consumer;
 
 public class InterProcessCommunicationUtil {
-    protected static final int PORT = 2015_6;
+    private static final int PORT = 20156;
 
     public static void listen(final Consumer<String[]> consumer) throws Exception {
         final ServerSocket listener = new ServerSocket(PORT);
 
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    try (Socket socket = listener.accept();
-                         ObjectInputStream ois = new ObjectInputStream(socket.getInputStream())) {
-                        // Receive args from another JD-GUI instance
-                        String[] args = (String[])ois.readObject();
-                        consumer.accept(args);
-                    } catch (IOException|ClassNotFoundException e) {
-                        assert ExceptionUtil.printStackTrace(e);
-                    }
+        new Thread(() -> {
+            while (true) {
+                try (Socket socket = listener.accept();
+                     ObjectInputStream ois = new ObjectInputStream(socket.getInputStream())) {
+                    // Receive args from another JD-GUI instance
+                    String[] args = (String[]) ois.readObject();
+                    consumer.accept(args);
+                } catch (IOException | ClassNotFoundException e) {
+                    assert ExceptionUtil.printStackTrace(e);
                 }
             }
-        };
-
-        new Thread(runnable).start();
+        }).start();
     }
 
     public static void send(String[] args) {
